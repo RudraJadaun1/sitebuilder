@@ -1,0 +1,671 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Aesthetic Website Builder - Redesigned</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700;800&family=Playfair+Display:wght@700&family=JetBrains+Mono:wght@400;700&family=Lora:wght@400;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --sidebar-width: 420px;
+            /* Light Theme */
+            --bg-primary-light: #ffffff;
+            --bg-secondary-light: #f7f7f8;
+            --bg-tertiary-light: #eff0f1;
+            --text-primary-light: #111827;
+            --text-secondary-light: #4b5563;
+            --border-light: #e5e7eb;
+            --accent-light: #4f46e5;
+
+            /* Dark Theme */
+            --bg-primary-dark: #1f2937;
+            --bg-secondary-dark: #2d3748;
+            --bg-tertiary-dark: #4a5568;
+            --text-primary-dark: #f9fafb;
+            --text-secondary-dark: #d1d5db;
+            --border-dark: #4b5563;
+            --accent-dark: #818cf8;
+        }
+        .dark {
+            --bg-primary: var(--bg-primary-dark);
+            --bg-secondary: var(--bg-secondary-dark);
+            --bg-tertiary: var(--bg-tertiary-dark);
+            --text-primary: var(--text-primary-dark);
+            --text-secondary: var(--text-secondary-dark);
+            --border: var(--border-dark);
+            --accent: var(--accent-dark);
+        }
+        .light {
+            --bg-primary: var(--bg-primary-light);
+            --bg-secondary: var(--bg-secondary-light);
+            --bg-tertiary: var(--bg-tertiary-light);
+            --text-primary: var(--text-primary-light);
+            --text-secondary: var(--text-secondary-light);
+            --border: var(--border-light);
+            --accent: var(--accent-light);
+        }
+
+        body { font-family: 'Inter', sans-serif; overflow: hidden; }
+        .sidebar {
+            width: var(--sidebar-width);
+            transition: margin-left 0.3s ease-in-out, background-color 0.3s, color 0.3s;
+            background-color: var(--bg-primary);
+            color: var(--text-primary);
+        }
+        .sidebar-hidden { margin-left: calc(-1 * var(--sidebar-width)); }
+        .input-field, .select-field { background-color: var(--bg-primary); border-color: var(--border); color: var(--text-primary); transition: background-color 0.3s, color 0.3s, border-color 0.3s; }
+        .tab-button { transition: background-color 0.2s, color 0.2s; }
+        .tab-button.active { background-color: var(--bg-tertiary); color: var(--text-primary); }
+        .tab-button:not(.active) { color: var(--text-secondary); }
+        .tab-content { display: none; }
+        .tab-content.active { display: block; animation: fadeIn 0.5s; }
+        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+
+        /* Project Editor Custom Styles */
+        .project-editor { background-color: var(--bg-secondary); border-color: var(--border); }
+        .project-editor-header { cursor: pointer; }
+        .project-editor-content { max-height: 0; overflow: hidden; transition: max-height 0.4s ease-in-out, padding 0.4s ease-in-out; }
+        .project-editor.open .project-editor-content { max-height: 500px; padding-top: 1rem; padding-bottom: 1rem;}
+        .project-editor.open .project-chevron { transform: rotate(180deg); }
+        .drag-handle { cursor: move; }
+        .project-editor.dragging { opacity: 0.7; }
+    </style>
+</head>
+<body class="bg-gray-200 h-screen flex">
+
+    <aside id="sidebar" class="sidebar h-full flex flex-col flex-shrink-0 shadow-2xl z-20">
+        <div class="p-4 border-b flex justify-between items-center flex-shrink-0" style="border-color: var(--border);">
+            <div class="flex items-center">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" class="w-7 h-7" style="color: var(--accent);"><path d="M9.75 3.104a5.25 5.25 0 00-5.25 5.25c0 1.23.423 2.342 1.125 3.255v8.641a.75.75 0 00.75.75h6.75a.75.75 0 00.75-.75v-8.641a5.25 5.25 0 00-4.125-5.255zM15.75 3.104a5.25 5.25 0 014.125 5.255v8.641a.75.75 0 01-.75.75h-6.75a.75.75 0 01-.75-.75v-8.641a5.25 5.25 0 013.375-4.991 1.875 1.875 0 01.75 0z"/></svg>
+                <h1 class="text-xl font-bold ml-2">Site Builder</h1>
+            </div>
+            <div class="flex items-center space-x-2">
+                 <button id="newProjectBtn" class="p-2 rounded-md hover:bg-red-500 hover:text-white" title="Start New Project">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M10 3a1 1 0 011 1v5h5a1 1 0 110 2h-5v5a1 1 0 11-2 0v-5H4a1 1 0 110-2h5V4a1 1 0 011-1z" clip-rule="evenodd" /></svg>
+                 </button>
+                 <input type="checkbox" id="theme-toggle" class="sr-only"/>
+                 <label for="theme-toggle" class="p-2 rounded-md cursor-pointer hover:bg-gray-500/10" title="Toggle Dark Mode">
+                     <svg class="h-5 w-5" id="theme-icon-light" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z" /></svg>
+                     <svg class="h-5 w-5 hidden" id="theme-icon-dark" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z" /></svg>
+                 </label>
+            </div>
+        </div>
+
+        <div class="p-2 border-b flex-shrink-0" style="background-color: var(--bg-secondary); border-color: var(--border);">
+            <div class="grid grid-cols-2 gap-2">
+                <button data-tab="style" class="tab-button text-sm font-bold py-2 px-4 rounded-md active">Style</button>
+                <button data-tab="projects" class="tab-button text-sm font-bold py-2 px-4 rounded-md">Projects</button>
+            </div>
+        </div>
+
+        <div class="flex-1 overflow-y-auto">
+            <div id="tab-style" class="tab-content active p-5 space-y-6">
+                 <div class="space-y-4">
+                    <h3 class="font-bold text-lg">Branding & Text</h3>
+                    <div>
+                        <label for="pageTitle" class="block text-sm font-medium" style="color: var(--text-secondary);">Site Title</label>
+                        <input type="text" id="pageTitle" class="input-field mt-1 block w-full rounded-md shadow-sm py-2 px-3">
+                    </div>
+                    <div>
+                        <label for="pageSubtitle" class="block text-sm font-medium" style="color: var(--text-secondary);">Subtitle</label>
+                        <input type="text" id="pageSubtitle" class="input-field mt-1 block w-full rounded-md shadow-sm py-2 px-3">
+                    </div>
+                    <div>
+                        <label for="footerText" class="block text-sm font-medium" style="color: var(--text-secondary);">Footer Text</label>
+                        <input type="text" id="footerText" class="input-field mt-1 block w-full rounded-md shadow-sm py-2 px-3">
+                    </div>
+                 </div>
+                 <div class="space-y-4 pt-4 border-t" style="border-color: var(--border);">
+                     <h3 class="font-bold text-lg">Colors & Fonts</h3>
+                     <div class="grid grid-cols-2 gap-4">
+                        <div>
+                           <label for="headingFontSelector" class="block text-sm font-medium" style="color: var(--text-secondary);">Heading Font</label>
+                           <select id="headingFontSelector" class="select-field mt-1 block w-full rounded-md shadow-sm py-2 px-3"></select>
+                        </div>
+                        <div>
+                           <label for="bodyFontSelector" class="block text-sm font-medium" style="color: var(--text-secondary);">Body Font</label>
+                           <select id="bodyFontSelector" class="select-field mt-1 block w-full rounded-md shadow-sm py-2 px-3"></select>
+                        </div>
+                     </div>
+                     <div class="grid grid-cols-3 gap-2">
+                         <div>
+                            <label class="block text-center text-xs font-medium" style="color: var(--text-secondary);">Background</label>
+                            <input type="color" id="bgColor" class="mt-1 w-full h-10 rounded-md">
+                         </div>
+                         <div>
+                            <label class="block text-center text-xs font-medium" style="color: var(--text-secondary);">Text</label>
+                            <input type="color" id="textColor" class="mt-1 w-full h-10 rounded-md">
+                         </div>
+                         <div>
+                            <label class="block text-center text-xs font-medium" style="color: var(--text-secondary);">Accent</label>
+                            <input type="color" id="accentColor" class="mt-1 w-full h-10 rounded-md">
+                         </div>
+                     </div>
+                 </div>
+                 <div class="space-y-4 pt-4 border-t" style="border-color: var(--border);">
+                     <h3 class="font-bold text-lg">Layout & Grid</h3>
+                     <div>
+                        <label for="pageWidth" class="block text-sm font-medium" style="color: var(--text-secondary);">Max Page Width (<span id="pageWidthValue"></span>px)</label>
+                        <input type="range" id="pageWidth" min="900" max="1600" step="10" class="w-full">
+                     </div>
+                     <div>
+                        <label for="headerAlign" class="block text-sm font-medium" style="color: var(--text-secondary);">Header Alignment</label>
+                        <select id="headerAlign" class="select-field mt-1 block w-full rounded-md shadow-sm py-2 px-3">
+                           <option value="center">Center</option>
+                           <option value="left">Left</option>
+                        </select>
+                     </div>
+                     <div>
+                        <label for="cardWidth" class="block text-sm font-medium" style="color: var(--text-secondary);">Min Card Width (<span id="cardWidthValue"></span>px)</label>
+                        <input type="range" id="cardWidth" min="200" max="500" step="10" class="w-full">
+                     </div>
+                      <div>
+                        <label for="cardGap" class="block text-sm font-medium" style="color: var(--text-secondary);">Gap (<span id="cardGapValue"></span>px)</label>
+                        <input type="range" id="cardGap" min="8" max="64" step="4" class="w-full">
+                     </div>
+                 </div>
+            </div>
+            <div id="tab-projects" class="tab-content p-4">
+                 <div class="flex justify-end mb-4">
+                     <button id="addProjectBtn" style="background-color: var(--accent);" class="text-white px-4 py-2 rounded-lg hover:opacity-80 text-sm font-semibold flex items-center">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M12 6v6m0 0v6m0-6h6m-6 0H6" /></svg>
+                        Add Project
+                    </button>
+                 </div>
+                <div id="projectList" class="space-y-3">
+                    </div>
+            </div>
+        </div>
+        <div class="p-4 border-t flex-shrink-0" style="border-color: var(--border);">
+            <button id="downloadBtn" class="w-full bg-green-600 text-white font-bold py-3 px-4 rounded-lg hover:bg-green-700 transition-colors flex items-center justify-center">
+                <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" /></svg>
+                Download HTML
+            </button>
+        </div>
+    </aside>
+
+    <div class="flex-1 flex flex-col">
+        <div class="bg-white/50 backdrop-blur-sm p-2 flex items-center shadow-sm">
+             <button id="toggleSidebarBtn" class="p-2 rounded-md hover:bg-gray-300">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" class="w-6 h-6 text-gray-700"><path fill-rule="evenodd" d="M3 6.75A.75.75 0 013.75 6h16.5a.75.75 0 010 1.5H3.75A.75.75 0 013 6.75zM3 12a.75.75 0 01.75-.75h16.5a.75.75 0 010 1.5H3.75A.75.75 0 013 12zm0 5.25a.75.75 0 01.75-.75h16.5a.75.75 0 010 1.5H3.75a.75.75 0 01-.75-.75z" clip-rule="evenodd" /></svg>
+            </button>
+            <span class="ml-4 text-sm text-gray-600 font-medium">Live Preview</span>
+        </div>
+        <main class="flex-1 bg-gray-200 p-4 md:p-6">
+            <div class="w-full h-full bg-white rounded-lg shadow-inner overflow-hidden">
+                <iframe id="preview" class="w-full h-full border-0"></iframe>
+            </div>
+        </main>
+    </div>
+
+    <script>
+    // --- INITIAL STATE & CONFIG ---
+    const initialConfig = {
+        title: 'My Creations',
+        subtitle: 'A collection of projects, thoughts, and experiments.',
+        footerText: '© 2025 Your Name',
+        theme: 'light',
+        typography: {
+            heading: 'Playfair Display',
+            body: 'Lora'
+        },
+        colors: {
+            background: '#f3f4f6',
+            text: '#1f2937',
+            accent: '#111827',
+        },
+        layout: {
+            pageWidth: '1280',
+            headerAlign: 'center',
+            gap: '32',
+        },
+        card: {
+            width: '320',
+            radius: '12',
+            style: 'default',
+            imageFit: 'cover',
+            textAlign: 'left'
+        },
+        projects: [
+            { id: 1, title: 'Internet Artifacts', link: '#', image: 'https://placehold.co/600x400/e0e7ff/3730a3?text=Project+1', bgColor: '#ffffff', textColor: '#111827' },
+            { id: 2, 'title': 'Space Elevator', link: '#', image: 'https://placehold.co/600x400/d1fae5/047857?text=Project+2', bgColor: '#ffffff', textColor: '#111827' },
+            { id: 3, 'title': 'Asteroid Launcher', link: '#', image: 'https://placehold.co/600x400/fefce8/854d0e?text=Project+3', bgColor: '#ffffff', textColor: '#111827' }
+        ]
+    };
+
+    let config = {};
+    const availableFonts = ['Inter', 'Lora', 'Playfair Display', 'JetBrains Mono'];
+
+    // --- DOM SELECTORS ---
+    const selectors = {
+        sidebar: document.getElementById('sidebar'),
+        toggleSidebarBtn: document.getElementById('toggleSidebarBtn'),
+        themeToggle: document.getElementById('theme-toggle'),
+        themeIconLight: document.getElementById('theme-icon-light'),
+        themeIconDark: document.getElementById('theme-icon-dark'),
+        newProjectBtn: document.getElementById('newProjectBtn'),
+        pageTitle: document.getElementById('pageTitle'),
+        pageSubtitle: document.getElementById('pageSubtitle'),
+        footerText: document.getElementById('footerText'),
+        headingFontSelector: document.getElementById('headingFontSelector'),
+        bodyFontSelector: document.getElementById('bodyFontSelector'),
+        bgColor: document.getElementById('bgColor'),
+        textColor: document.getElementById('textColor'),
+        accentColor: document.getElementById('accentColor'),
+        pageWidth: document.getElementById('pageWidth'),
+        pageWidthValue: document.getElementById('pageWidthValue'),
+        headerAlign: document.getElementById('headerAlign'),
+        cardWidth: document.getElementById('cardWidth'),
+        cardWidthValue: document.getElementById('cardWidthValue'),
+        cardGap: document.getElementById('cardGap'),
+        cardGapValue: document.getElementById('cardGapValue'),
+        addProjectBtn: document.getElementById('addProjectBtn'),
+        projectList: document.getElementById('projectList'),
+        downloadBtn: document.getElementById('downloadBtn'),
+        preview: document.getElementById('preview'),
+        tabs: document.querySelectorAll('.tab-button'),
+        tabContents: document.querySelectorAll('.tab-content'),
+    };
+    
+    // --- DATA PERSISTENCE ---
+    function saveConfig() {
+        localStorage.setItem('aestheticBuilderConfig', JSON.stringify(config));
+    }
+
+    function loadConfig() {
+        const savedConfig = localStorage.getItem('aestheticBuilderConfig');
+        const defaultConfigCopy = JSON.parse(JSON.stringify(initialConfig));
+        if (savedConfig) {
+             config = deepMerge(defaultConfigCopy, JSON.parse(savedConfig));
+        } else {
+            config = defaultConfigCopy;
+        }
+    }
+    
+    function deepMerge(target, source) {
+        for (const key in source) {
+            if (source[key] instanceof Object && key in target) {
+                Object.assign(source[key], deepMerge(target[key], source[key]));
+            }
+        }
+        Object.assign(target || {}, source);
+        return target;
+    }
+
+    // --- CORE RENDER FUNCTIONS ---
+    function renderPreview() {
+        const projectCardsHTML = config.projects.map(p => {
+            const imageUrl = p.image && (p.image.startsWith('http') || p.image.startsWith('data:')) ? p.image : `https://placehold.co/600x400/f3f4f6/9ca3af?text=No+Image`;
+            return `
+            <a href="${p.link}" target="_blank" class="project-card" style="background-color: ${p.bgColor}; border-radius: ${config.card.radius}px; box-shadow: ${config.card.style === 'shadow' ? '0 10px 15px -3px rgba(0,0,0,0.1), 0 4px 6px -2px rgba(0,0,0,0.05)' : 'none'}; border: ${config.card.style === 'default' ? '1px solid #e5e7eb' : '1px solid transparent'};">
+                <div class="card-image-wrapper">
+                    <img src="${imageUrl}" alt="${p.title}" class="card-image" style="object-fit: ${config.card.imageFit};" onerror="this.onerror=null;this.src='https://placehold.co/600x400/fecaca/991b1b?text=Invalid+URL';">
+                </div>
+                <div class="card-content" style="text-align: ${config.card.textAlign};">
+                    <h3 class="card-title" style="color: ${p.textColor};">${p.title}</h3>
+                </div>
+            </a>`;
+        }).join('');
+
+        const finalHTML = `
+            <!DOCTYPE html><html lang="en">
+            <head>
+                <meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+                <title>${config.title}</title>
+                <link rel="preconnect" href="https://fonts.googleapis.com">
+                <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+                <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;700;800&family=Playfair+Display:wght@700&family=JetBrains+Mono:wght@400;700&family=Lora:wght@400;700&display=swap" rel="stylesheet">
+                <style>
+                    body { font-family: '${config.typography.body}', sans-serif; background-color: ${config.colors.background}; color: ${config.colors.text}; margin: 0; }
+                    .container { display: flex; flex-direction: column; align-items: center; padding: 5rem 2rem; min-height: 100vh; box-sizing: border-box; }
+                    .header { text-align: ${config.layout.headerAlign}; margin-bottom: 4rem; width: 100%; max-width: ${config.layout.pageWidth}px; }
+                    .main-title { font-family: '${config.typography.heading}', serif; font-size: 3.5rem; font-weight: 700; margin: 0; color: ${config.colors.accent}; }
+                    .subtitle { font-size: 1.25rem; margin-top: 0.5rem; max-width: 600px; opacity: 0.7; ${config.layout.headerAlign === 'center' ? 'margin-left: auto; margin-right: auto;' : ''} }
+                    .project-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(${config.card.width}px, 1fr)); gap: ${config.layout.gap}px; width: 100%; max-width: ${config.layout.pageWidth}px; }
+                    .project-card { text-decoration: none; display: flex; flex-direction: column; overflow: hidden; transition: transform 0.2s cubic-bezier(0.22, 1, 0.36, 1), box-shadow 0.2s; }
+                    .project-card:hover { transform: translateY(-6px); }
+                    .card-image-wrapper { width: 100%; flex-shrink: 0; background-color: #f9fafb; aspect-ratio: 16/10; }
+                    .card-image { width: 100%; height: 100%; display: block; }
+                    .card-content { padding: 1.25rem; flex-grow: 1; display: flex; align-items: center; justify-content: ${config.card.textAlign === 'center' ? 'center' : (config.card.textAlign === 'right' ? 'flex-end' : 'flex-start')}; }
+                    .card-title { font-size: 1.25rem; font-weight: 700; margin: 0; font-family: '${config.typography.heading}', serif; }
+                    .footer { text-align: center; margin-top: 5rem; padding-top: 2rem; border-top: 1px solid #e5e7eb; width: 100%; max-width: ${config.layout.pageWidth}px; opacity: 0.6;}
+                    @media (max-width: 768px) { .main-title { font-size: 2.5rem; } .subtitle { font-size: 1rem; } .container { padding: 4rem 1rem; } }
+                </style>
+            </head>
+            <body>
+                <div class="container">
+                    <header class="header"><h1 class="main-title">${config.title}</h1><p class="subtitle">${config.subtitle}</p></header>
+                    <div class="project-grid">${projectCardsHTML}</div>
+                    <footer class="footer"><p>${config.footerText}</p></footer>
+                </div>
+            </body></html>`;
+        const previewDoc = selectors.preview.contentWindow.document;
+        previewDoc.open();
+        previewDoc.write(finalHTML);
+        previewDoc.close();
+        return finalHTML;
+    }
+
+    function renderProjectEditors() {
+        selectors.projectList.innerHTML = '';
+        config.projects.forEach((project) => {
+            const card = document.createElement('div');
+            card.className = 'project-editor border rounded-lg';
+            card.setAttribute('draggable', true);
+            card.dataset.id = project.id;
+
+            const fileInputId = `file-upload-${project.id}`;
+            const imageFieldValue = project.image.startsWith('data:') ? 'local_image.png' : project.image;
+
+            card.innerHTML = `
+                <div class="project-editor-header p-3 flex items-center justify-between">
+                    <div class="flex items-center min-w-0">
+                        <svg class="w-5 h-5 drag-handle flex-shrink-0" style="color: var(--text-secondary);" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16m-7 6h7"></path></svg>
+                        <p class="font-bold ml-3 truncate project-card-title">${project.title || 'New Project'}</p>
+                    </div>
+                    <div class="flex items-center">
+                        <button data-id="${project.id}" class="delete-project-btn text-red-500 hover:text-red-700 text-sm font-medium flex-shrink-0 ml-2 p-1 rounded-md">Remove</button>
+                        <svg class="w-5 h-5 project-chevron transition-transform ml-2" style="color: var(--text-secondary);" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
+                    </div>
+                </div>
+                <div class="project-editor-content px-3 space-y-3">
+                     <div>
+                        <label class="text-xs" style="color: var(--text-secondary);">Title</label>
+                        <input type="text" data-field="title" value="${project.title}" class="project-input input-field w-full rounded p-1.5 text-sm shadow-sm">
+                    </div>
+                    <div>
+                        <label class="text-xs" style="color: var(--text-secondary);">Image URL or Upload</label>
+                        <div class="flex items-center space-x-2">
+                           <input type="text" data-field="image" value="${imageFieldValue}" class="project-input input-field w-full rounded p-1.5 text-sm shadow-sm" placeholder="https://...">
+                           <button class="upload-image-btn p-2 rounded" style="background-color: var(--bg-tertiary);" title="Upload Local Image">
+                               <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"></path></svg>
+                           </button>
+                           <input type="file" id="${fileInputId}" class="hidden-file-input" accept="image/*" data-id="${project.id}">
+                        </div>
+                    </div>
+                    <div>
+                        <label class="text-xs" style="color: var(--text-secondary);">Link URL</label>
+                        <input type="text" data-field="link" value="${project.link}" class="project-input input-field w-full rounded p-1.5 text-sm shadow-sm">
+                    </div>
+                    <div class="grid grid-cols-2 gap-3 pt-2">
+                        <div>
+                           <label class="text-xs" style="color: var(--text-secondary);">Card BG</label>
+                           <input type="color" data-field="bgColor" value="${project.bgColor}" class="project-input w-full h-9">
+                        </div>
+                        <div>
+                           <label class="text-xs" style="color: var(--text-secondary);">Text Color</label>
+                           <input type="color" data-field="textColor" value="${project.textColor}" class="project-input w-full h-9">
+                        </div>
+                    </div>
+                    <hr style="border-color: var(--border);" />
+                    <h4 class="text-sm font-bold">Card Style Overrides</h4>
+                    <div class="grid grid-cols-2 gap-4">
+                        <div>
+                            <label class="text-xs" style="color: var(--text-secondary);">Corner Radius (px)</label>
+                            <input type="range" data-field="radius" value="${project.radius ?? config.card.radius}" min="0" max="48" step="1" class="w-full project-input">
+                        </div>
+                        <div>
+                            <label class="text-xs" style="color: var(--text-secondary);">Text Align</label>
+                             <select data-field="textAlign" class="project-input select-field w-full rounded p-1.5 text-sm shadow-sm">
+                                <option value="">Default</option><option value="left">Left</option><option value="center">Center</option><option value="right">Right</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+            `;
+            selectors.projectList.appendChild(card);
+             // Set select value after appending
+            const textAlignSelect = card.querySelector('select[data-field="textAlign"]');
+            if (textAlignSelect) {
+                textAlignSelect.value = project.textAlign || '';
+            }
+        });
+    }
+
+    // --- UI & EVENT HANDLERS ---
+    function updateUIFromConfig() {
+        // Theme
+        selectors.themeToggle.checked = (config.theme === 'dark');
+        selectors.sidebar.className = `sidebar h-full flex flex-col flex-shrink-0 shadow-2xl z-20 ${config.theme}`;
+        selectors.themeIconLight.classList.toggle('hidden', config.theme === 'dark');
+        selectors.themeIconDark.classList.toggle('hidden', config.theme === 'light');
+        
+        // Branding
+        selectors.pageTitle.value = config.title;
+        selectors.pageSubtitle.value = config.subtitle;
+        selectors.footerText.value = config.footerText;
+
+        // Colors & Fonts
+        selectors.headingFontSelector.value = config.typography.heading;
+        selectors.bodyFontSelector.value = config.typography.body;
+        selectors.bgColor.value = config.colors.background;
+        selectors.textColor.value = config.colors.text;
+        selectors.accentColor.value = config.colors.accent;
+
+        // Layout
+        selectors.pageWidth.value = config.layout.pageWidth;
+        selectors.pageWidthValue.textContent = config.layout.pageWidth;
+        selectors.headerAlign.value = config.layout.headerAlign;
+        selectors.cardWidth.value = config.card.width;
+        selectors.cardWidthValue.textContent = config.card.width;
+        selectors.cardGap.value = config.layout.gap;
+        selectors.cardGapValue.textContent = config.layout.gap;
+    }
+
+    function setupEventListeners() {
+        let debounceTimer;
+        const debouncedRenderAndSave = (delay = 250) => {
+            clearTimeout(debounceTimer);
+            debounceTimer = setTimeout(() => {
+                renderPreview();
+                saveConfig();
+            }, delay);
+        };
+
+        // Sidebar Toggle
+        selectors.toggleSidebarBtn.addEventListener('click', () => selectors.sidebar.classList.toggle('sidebar-hidden'));
+        
+        // Theme Toggle
+        selectors.themeToggle.addEventListener('change', () => {
+            config.theme = selectors.themeToggle.checked ? 'dark' : 'light';
+            updateUIFromConfig();
+            saveConfig();
+        });
+
+        // New Project Button
+        selectors.newProjectBtn.addEventListener('click', () => {
+            if (confirm('Are you sure you want to start a new project? All current changes will be lost.')) {
+                localStorage.removeItem('aestheticBuilderConfig');
+                loadConfig();
+                updateUIFromConfig();
+                fullRender();
+            }
+        });
+        
+        // Tabs
+        selectors.tabs.forEach(tab => {
+            tab.addEventListener('click', () => {
+                selectors.tabs.forEach(t => t.classList.remove('active'));
+                tab.classList.add('active');
+                selectors.tabContents.forEach(c => c.classList.remove('active'));
+                document.getElementById('tab-' + tab.dataset.tab).classList.add('active');
+            });
+        });
+
+        // Simple input listeners
+        const inputsToWatch = {
+            'pageTitle': (val) => config.title = val,
+            'pageSubtitle': (val) => config.subtitle = val,
+            'footerText': (val) => config.footerText = val,
+            'pageWidth': (val) => { config.layout.pageWidth = val; selectors.pageWidthValue.textContent = val; },
+            'cardWidth': (val) => { config.card.width = val; selectors.cardWidthValue.textContent = val; },
+            'cardGap': (val) => { config.layout.gap = val; selectors.cardGapValue.textContent = val; },
+        };
+        for (const id in inputsToWatch) {
+            selectors[id].addEventListener('input', (e) => {
+                inputsToWatch[id](e.target.value);
+                debouncedRenderAndSave();
+            });
+        }
+        
+        // Select change listeners
+        const selectsToWatch = {
+            'headingFontSelector': (val) => config.typography.heading = val,
+            'bodyFontSelector': (val) => config.typography.body = val,
+            'headerAlign': (val) => config.layout.headerAlign = val,
+        };
+         for (const id in selectsToWatch) {
+            selectors[id].addEventListener('change', (e) => {
+                selectsToWatch[id](e.target.value);
+                renderPreview();
+                saveConfig();
+            });
+        }
+
+        // Color input listeners
+        ['bgColor', 'textColor', 'accentColor'].forEach(id => {
+             const key = id.replace('Color', '');
+             selectors[id].addEventListener('input', () => { 
+                config.colors[key] = selectors[id].value; 
+                debouncedRenderAndSave(0); 
+             });
+        });
+
+        // Project Management
+        selectors.addProjectBtn.addEventListener('click', () => {
+            const newProject = { id: Date.now(), title: 'New Project', link: '#', image: 'https://placehold.co/600x400/9ca3af/ffffff?text=New', bgColor: '#ffffff', textColor: '#1f2937' };
+            config.projects.unshift(newProject);
+            fullRender();
+            saveConfig();
+        });
+
+        selectors.projectList.addEventListener('click', e => {
+            const projectCard = e.target.closest('.project-editor');
+            if (!projectCard) return;
+
+            // Delete button
+            if (e.target.closest('.delete-project-btn')) {
+                config.projects = config.projects.filter(p => p.id !== parseInt(projectCard.dataset.id));
+                fullRender();
+                saveConfig();
+                return;
+            }
+
+            // Toggle project editor open/closed
+            if (e.target.closest('.project-editor-header')) {
+                projectCard.classList.toggle('open');
+            }
+
+            // Upload button
+            if (e.target.closest('.upload-image-btn')) {
+                projectCard.querySelector('.hidden-file-input').click();
+            }
+        });
+
+        selectors.projectList.addEventListener('input', e => {
+            if (e.target.classList.contains('project-input')) {
+                const id = parseInt(e.target.closest('.project-editor').dataset.id);
+                const field = e.target.dataset.field;
+                const project = config.projects.find(p => p.id === id);
+                if (project) {
+                    // Check if it's a project-level override or a main field
+                    if(['radius', 'textAlign'].includes(field)) {
+                        project[field] = e.target.value;
+                    } else {
+                        project[field] = e.target.value;
+                    }
+                    if (field === 'title') {
+                        e.target.closest('.project-editor').querySelector('.project-card-title').textContent = e.target.value;
+                    }
+                    debouncedRenderAndSave();
+                }
+            }
+        });
+
+        selectors.projectList.addEventListener('change', e => {
+             if (e.target.classList.contains('hidden-file-input')) {
+                 const id = parseInt(e.target.dataset.id);
+                 const project = config.projects.find(p => p.id === id);
+                 if (project && e.target.files && e.target.files[0]) {
+                     const reader = new FileReader();
+                     reader.onload = (event) => {
+                         project.image = event.target.result;
+                         fullRender();
+                         saveConfig();
+                     }
+                     reader.readAsDataURL(e.target.files[0]);
+                 }
+             }
+        });
+
+        let draggedItem = null;
+        selectors.projectList.addEventListener('dragstart', e => {
+            if (e.target.closest('.project-editor')) {
+                draggedItem = e.target.closest('.project-editor');
+                setTimeout(() => draggedItem.classList.add('dragging'), 0);
+            }
+        });
+        selectors.projectList.addEventListener('dragend', () => {
+             if(draggedItem) {
+                draggedItem.classList.remove('dragging');
+                const newOrderIds = [...selectors.projectList.querySelectorAll('.project-editor')].map(card => parseInt(card.dataset.id));
+                config.projects.sort((a, b) => newOrderIds.indexOf(a.id) - newOrderIds.indexOf(b.id));
+                draggedItem = null;
+                renderPreview();
+                saveConfig();
+            }
+        });
+        selectors.projectList.addEventListener('dragover', e => {
+            e.preventDefault();
+            const container = selectors.projectList;
+            const afterElement = [...container.querySelectorAll('.project-editor:not(.dragging)')].reduce((closest, child) => {
+                const box = child.getBoundingClientRect();
+                const offset = e.clientY - box.top - box.height / 2;
+                return (offset < 0 && offset > closest.offset) ? { offset, element: child } : closest;
+            }, { offset: Number.NEGATIVE_INFINITY }).element;
+            if (draggedItem) {
+                afterElement ? container.insertBefore(draggedItem, afterElement) : container.appendChild(draggedItem);
+            }
+        });
+
+        selectors.downloadBtn.addEventListener('click', () => {
+            const finalHTML = renderPreview();
+            const blob = new Blob([finalHTML], { type: 'text/html' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            const filename = config.title.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '') || 'my-site';
+            a.href = url;
+            a.download = `${filename}.html`;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+        });
+    }
+
+    function populateFontSelectors() {
+        availableFonts.forEach(font => {
+            selectors.headingFontSelector.add(new Option(font, font));
+            selectors.bodyFontSelector.add(new Option(font, font));
+        });
+    }
+
+    // --- INITIALIZATION ---
+    function fullRender() {
+        renderProjectEditors();
+        renderPreview();
+    }
+
+    window.onload = () => {
+        loadConfig();
+        populateFontSelectors();
+        updateUIFromConfig();
+        setupEventListeners();
+        fullRender();
+    };
+    </script>
+</body>
+</html>
